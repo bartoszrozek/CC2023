@@ -7,7 +7,7 @@ function PresentationTab() {
     labels: ["January", "February", "March", "April", "May", "June", "July"],
     datasets: [
       {
-        label: "ARIMA",
+        label: "Prediction",
         backgroundColor: "rgba(255, 255, 255, 0.2)",
         borderColor: "rgba(255, 255, 255, 1)",
         borderWidth: 2,
@@ -16,23 +16,53 @@ function PresentationTab() {
     ],
   });
   const [inputs, setInputs] = useState({});
+  const [labels, setLabels] = useState([]);
+  const [plotValues, setPlotValues] = useState([]);
+
+  function fetchPrediction(
+    link = "https://cloudy2023pw-output-bucket.s3.amazonaws.com/file_example9.json"
+  ) {
+    let labels = [];
+    let vals = [];
+    fetch(link)
+      .then((response) => response.json())
+      .then((data) => {
+        data.forEach((x) => {
+          labels.push(x["ReportDate"]);
+          vals.push(x["Variable"]);
+        });
+        console.log(labels);
+        console.log(vals);
+
+        setLabels(labels);
+        setPlotValues(vals);
+      })
+      .catch((error) => console.error(error));
+  }
 
   useEffect(() => {
-    console.log(inputs, "- Has changed");
-    // placeholder for request from aws lambda
-    // setMyData({
-    //   xValues: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"],
-    //   y1Values: Array.from({ length: 7 }, () => Math.floor(Math.random() * 40)),
-    // });
+    console.log("Has changed");
+
+    let fileName = "file_example9";
+
+    fetchPrediction(
+      "https://cloudy2023pw-output-bucket.s3.amazonaws.com/" +
+        fileName +
+        ".json"
+    );
+
+    console.log(labels);
+    console.log(plotValues);
+
     setMyData({
-      labels: ["January", "February", "March", "April", "May", "June", "July"],
+      labels: labels,
       datasets: [
         {
           label: "ARIMA",
           backgroundColor: "rgba(255, 255, 255, 0.2)",
           borderColor: "rgba(255, 255, 255, 1)",
           borderWidth: 2,
-          data: Array.from({ length: 7 }, () => Math.floor(Math.random() * 40)),
+          data: plotValues,
         },
       ],
     });
