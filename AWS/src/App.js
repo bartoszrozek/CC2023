@@ -4,7 +4,7 @@ import PresentationTab from "./Tabs/PresentationTab";
 import "./App.css";
 
 function App() {
-  const [activeTab, setActiveTab] = useState(2);
+  const [activeTab, setActiveTab] = useState(1);
 
   function handleTabClick(tab) {
     setActiveTab(tab);
