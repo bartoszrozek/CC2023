@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import Papa from "papaparse";
+import React, { useState } from "react";
 import * as dfd from "danfojs";
 
 function CsvReader() {
@@ -31,7 +30,7 @@ function CsvReader() {
       .catch((err) => {
         console.log(err);
       });
-    if (csvData.length != 0) {
+    if (csvData.length !== 0) {
       const df_json = dfd.toJSON(csvData);
 
       let body_data = {
@@ -39,29 +38,6 @@ function CsvReader() {
         fileName: fileName,
         tags: tagsList,
       };
-
-      let data = "";
-      async function readStream(reader) {
-        while (true) {
-          const { done, value } = await reader.read();
-
-          if (done) {
-            console.log("Stream fully consumed.");
-            break;
-          }
-
-          console.log(`Received chunk of size ${value.byteLength}.`);
-
-          data += new TextDecoder().decode(value);
-
-          // Do something with the chunk of data here.
-          // For example, you could write it to a file or process it in some way.
-          console.log(data);
-        }
-      }
-
-      console.log(JSON.stringify(body_data));
-      console.log(fileName);
 
       fetch(
         "https://7ggeit3d73.execute-api.us-east-1.amazonaws.com/prod/uploadfile",
@@ -74,8 +50,15 @@ function CsvReader() {
         }
       )
         .then((response) => response.status)
-        .then((data) => setStatus(data))
-        .catch((error) => console.error(error));
+        .then((data) => {
+          setStatus(data);
+          waitAfterUpload(setStatus);
+        })
+        .catch((error) => {
+          console.error(error);
+          setStatus(505);
+          waitAfterUpload(setStatus);
+        });
     } else {
       setStatus(505);
     }
@@ -83,29 +66,47 @@ function CsvReader() {
 
   return (
     <div>
-      <input
-        type="text"
-        id="file_name"
-        name="file_name"
-        value={fileName}
-        onChange={handleChangeFileName}
-      ></input>
+      <div className="centeredElements">
+        <label htmlFor="file_name">File name:</label>
+        <input
+          type="text"
+          id="file_name"
+          name="file_name"
+          value={fileName}
+          onChange={handleChangeFileName}
+        ></input>
+      </div>
       <br />
-      <input
-        type="text"
-        id="file_name"
-        name="file_name"
-        value={tagsList}
-        onChange={handleChangeTagsList}
-      ></input>
+      <div className="centeredElements">
+        <label htmlFor="file_name">Tag:</label>
+        <input
+          type="text"
+          id="tag_name"
+          name="tag_name"
+          value={tagsList}
+          onChange={handleChangeTagsList}
+        ></input>
+      </div>
       <br />
-      <input type="file" onChange={handleCsvFile} />
-      <div>{status}</div>
-      <button onClick={handleUploadFile}>Upload file</button>
-      {status === 200 && <p>Upload successful</p>}
-      {status > 200 && <p>Upload failed!</p>}
+      <div className="centeredElements" style={{ marginLeft: "50px" }}>
+        <input type="file" accept=".csv" onChange={handleCsvFile} />
+      </div>
+      <br />
+      <div className="centeredElements">
+        <button onClick={handleUploadFile}>Upload file</button>
+      </div>
+      <div className="centeredElements">
+        {status === 200 && <p>Upload successful!</p>}
+        {status > 200 && <p>Upload failed!</p>}
+      </div>
     </div>
   );
 }
 
 export default CsvReader;
+
+const waitAfterUpload = async (setStatus) => {
+  const delay = (ms) => new Promise((res) => setTimeout(res, ms));
+  await delay(5000);
+  setStatus(0);
+};

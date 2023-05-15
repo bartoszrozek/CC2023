@@ -1,36 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 function AnovaInput({ setInputs }) {
-  const minCal = "2018-01-01";
-  const maxCal = "2018-12-31";
-  const minPred = "2019-01-01";
-  const maxPred = "2019-12-31";
-  const variables = ["variable1", "variable2", "variable3"];
+  const [fileNames, setFileNames] = useState(["file_example9"]);
+  const [fileName, setFileName] = useState(fileNames[0]);
+  const [tagName, setTagName] = useState("All");
+  const [tagNames, setTagNames] = useState([]);
+  const ref = useRef(null);
 
-  const [dateStartCal, setDateStartCal] = useState(minCal);
-  const [dateEndCal, setDateEndCal] = useState(maxCal);
-  const [dateStartPred, setDateStartPred] = useState(minPred);
-  const [dateEndPred, setDateEndPred] = useState(maxPred);
-  const [variableInput, setVariableInput] = useState(variables[0]);
+  useEffect(() => {
+    async function readStream(reader) {
+      let data = "";
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          console.log("Stream fully consumed.");
+          break;
+        }
+
+        console.log(`Received chunk of size ${value.byteLength}.`);
+
+        data += new TextDecoder().decode(value);
+
+        // Do something with the chunk of data here.
+        // For example, you could write it to a file or process it in some way.
+        //console.log(data);
+        return data;
+      }
+    }
+
+    fetch(
+      "https://uelh74d3lk.execute-api.us-east-1.amazonaws.com/prod/getnames",
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    )
+      .then((response) => response.body)
+      .then((data) => {
+        let body = readStream(data.getReader());
+
+        body.then((value) => {
+          console.log(value);
+          let files_tags = value.split("|");
+          let fileNames_ = files_tags[0].split(",");
+          let tags_ = files_tags[1].split(",");
+          fileNames_ = fileNames_.map((name_, idx) => {
+            return {
+              name: name_.slice(0, -5),
+              tag: tags_[idx],
+            };
+          });
+          tags_ = tags_.filter((x) => x !== "").filter(onlyUnique);
+          tags_.unshift("All");
+          setFileNames(fileNames_);
+          setTagNames(tags_);
+          console.log(tags_);
+        });
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
+  useEffect(() => {
+    setFileName(ref.current.value);
+  }, [tagName]);
 
   const handleInputChange = (event) => {
     const { name, value } = event.target;
 
     switch (name) {
-      case "dateStartCal":
-        setDateStartCal(value);
+      case "fileName":
+        setFileName(value);
         break;
-      case "dateEndCal":
-        setDateEndCal(value);
-        break;
-      case "dateStartPred":
-        setDateStartPred(value);
-        break;
-      case "dateEndPred":
-        setDateEndPred(value);
-        break;
-      case "variableInput":
-        setVariableInput(value);
+      case "tagName":
+        setTagName(value);
         break;
       default:
         break;
@@ -41,11 +86,8 @@ function AnovaInput({ setInputs }) {
     event.preventDefault();
 
     const inputs = {
-      dateStartCal,
-      dateEndCal,
-      dateStartPred,
-      dateEndPred,
-      variableInput,
+      fileName,
+      tagName,
     };
 
     setInputs(inputs);
@@ -55,69 +97,34 @@ function AnovaInput({ setInputs }) {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div>
-        <div className="input-div">
-          <label htmlFor="dateStartCal">Start of the calibration:</label>
-          <input
-            type="date"
-            id="dateStartCal"
-            name="dateStartCal"
-            value={dateStartCal}
-            min={minCal}
-            max={maxCal}
-            onChange={handleInputChange}
-          ></input>
-        </div>
-        <div className="input-div">
-          <label htmlFor="endCalibration">End of the calibration:</label>
-          <input
-            type="date"
-            id="dateEndCal"
-            name="dateEndCal"
-            value={dateEndCal}
-            min={minCal}
-            max={maxCal}
-            onChange={handleInputChange}
-          ></input>
-        </div>
-      </div>
-
-      <div>
-        <div className="input-div">
-          <label htmlFor="startPrediction">Start of the prediciton:</label>
-          <input
-            type="date"
-            id="dateStartPred"
-            name="dateStartPred"
-            value={dateStartPred}
-            min={minPred}
-            max={maxPred}
-            onChange={handleInputChange}
-          ></input>
-        </div>
-        <div className="input-div">
-          <label htmlFor="endPrediction">End of the prediciton:</label>
-          <input
-            type="date"
-            id="dateEndPred"
-            name="dateEndPred"
-            value={dateEndPred}
-            min={minPred}
-            max={maxPred}
-            onChange={handleInputChange}
-          ></input>
-        </div>
-      </div>
-
-      <div className="input-div">
-        <label htmlFor="variableInput">Modelling variable:</label>
+      <div className="centeredElements">
+        <label htmlFor="fileName">File name:</label>
         <select
-          id="variableInput"
-          onChange={handleInputChange}
-          value={variableInput}
-          name="variableInput"
+          id="fileName"
+          onChangeCapture={handleInputChange}
+          value={fileName}
+          name="fileName"
+          ref={ref}
         >
-          {variables.map((name) => (
+          {fileNames
+            .filter((obj) => tagName === "All" || obj.tag === tagName)
+            .map((obj) => (
+              <option key={obj.name} value={obj.name}>
+                {obj.name}
+              </option>
+            ))}
+        </select>
+      </div>
+      <br />
+      <div className="centeredElements">
+        <label htmlFor="tagName">Tag name:</label>
+        <select
+          id="tagName"
+          onChangeCapture={handleInputChange}
+          value={tagName}
+          name="tagName"
+        >
+          {tagNames.map((name) => (
             <option key={name} value={name}>
               {name}
             </option>
@@ -125,11 +132,15 @@ function AnovaInput({ setInputs }) {
         </select>
       </div>
 
-      <div className="input-div">
-        <button type="submit">Calibrate!</button>
+      <div className="centeredElements" style={{ marginTop: "15px" }}>
+        <button type="submit">Show prediction</button>
       </div>
     </form>
   );
 }
 
 export default AnovaInput;
+
+function onlyUnique(value, index, array) {
+  return array.indexOf(value) === index;
+}

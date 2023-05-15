@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <h1>Cloud computing : project 2 - AWS</h1>
+      <h1>CC AWS: ARIMA </h1>
       <hr />
       <div className="tabs">
         <div
