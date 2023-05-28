@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <h1>CC AWS: ARIMA </h1>
+      <h1>CC AWS: Prediction App </h1>
       <hr />
       <div className="tabs">
         <div
@@ -29,7 +29,7 @@ function App() {
             "tabset " + (activeTab === 2 ? "active-tab" : "nonactive-tab")
           }
         >
-          <p>ARIMA analysis</p>
+          <p>Prediction</p>
         </div>
       </div>
       {activeTab === 1 && <InputTab />}

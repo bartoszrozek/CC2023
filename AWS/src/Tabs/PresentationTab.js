@@ -59,7 +59,7 @@ function PresentationTab() {
       labels: labels,
       datasets: [
         {
-          label: "ARIMA",
+          label: "Prediction",
           backgroundColor: "rgba(255, 255, 255, 0.2)",
           borderColor: "rgba(255, 255, 255, 1)",
           borderWidth: 2,
