@@ -75,7 +75,7 @@ function PresentationTab() {
       <div style={{ width: "90%", marginLeft: "auto", marginRight: "auto" }}>
         <LineChart data={myData} />
       </div>
-      <div className="centeredElements">
+      <div style ={{marginBottom: "15px"}} className="centeredElements">
         <button onClick={downloadCSV}>Download data</button>
       </div>
     </div>
