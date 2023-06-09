@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import * as dfd from "danfojs";
 
 function CsvReader() {
-  const [csvData, setCsvData] = useState([]);
   const [status, setStatus] = useState(0);
   const [fileName, setFileName] = useState("");
   const [tagsList, setTagList] = useState("");
@@ -24,44 +23,49 @@ function CsvReader() {
     dfd
       .readCSV(fileInput)
       .then((df) => {
+        setStatus(-1);
         df.head().print();
-        setCsvData(df);
+        console.log(df);
+        if (df !== 0) {
+          const df_json = dfd.toJSON(df);
+    
+          let body_data = {
+            df: df_json,
+            fileName: fileName,
+            tags: tagsList,
+          };
+    
+          console.log(body_data);
+          console.log(JSON.stringify(body_data));
+    
+          fetch(
+            "https://7ggeit3d73.execute-api.us-east-1.amazonaws.com/prod/uploadfile",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(body_data),
+            }
+          )
+            .then((response) => response.status)
+            .then((data) => {
+              setStatus(data);
+              waitAfterUpload(setStatus);
+            })
+            .catch((error) => {
+              console.error(error);
+              setStatus(505);
+              waitAfterUpload(setStatus);
+            });
+        } else {
+          setStatus(505);
+        }
       })
       .catch((err) => {
         console.log(err);
       });
-    if (csvData.length !== 0) {
-      const df_json = dfd.toJSON(csvData);
 
-      let body_data = {
-        df: df_json,
-        fileName: fileName,
-        tags: tagsList,
-      };
-
-      fetch(
-        "https://7ggeit3d73.execute-api.us-east-1.amazonaws.com/prod/uploadfile",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body_data),
-        }
-      )
-        .then((response) => response.status)
-        .then((data) => {
-          setStatus(data);
-          waitAfterUpload(setStatus);
-        })
-        .catch((error) => {
-          console.error(error);
-          setStatus(505);
-          waitAfterUpload(setStatus);
-        });
-    } else {
-      setStatus(505);
-    }
   };
 
   return (
@@ -98,6 +102,7 @@ function CsvReader() {
       <div className="centeredElements">
         {status === 200 && <p>Upload successful!</p>}
         {status > 200 && <p>Upload failed!</p>}
+        {status === -1 && <p>Uploading...</p>}
       </div>
     </div>
   );
